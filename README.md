@@ -10,3 +10,8 @@ MongoDB conectado no Atlas (cloud)
 </br>
 <b>Teste Unitário:</b></br>
 MongdoDB Embedded
+
+</br>
+</br>
+
+<b> Para rodar o projeto, fazer o clone do repositório e rodar local, executando os endpoints via swagger ou postman. Os dados de conexão do banco estão no application.properties </b>
