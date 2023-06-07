@@ -1,6 +1,7 @@
 package com.project.wishlist.api.service;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -26,42 +27,66 @@ public class WishlistService {
 	
 	public WishlistResponse addProduct(Long userId, Long productId) {
 		
-		Wishlist wishList = this.findUser(userId).get();
+		Wishlist wishList = wishListRepository.findByUserId(userId)
+				.orElse(new Wishlist(userId, new HashSet<>()));
 		
 		if (limitOfProductsIntoWishListWasNotReached(wishList.getProductList().size())) {
 			
 			wishList.getProductList().add(productId);
-			return this.mapToResponse(wishListRepository.save(wishList));
+			
+			Wishlist wishListSaved = wishListRepository.save(wishList);
+			
+			return this.mapToResponse(wishListSaved.getUserId(), wishListSaved.getProductList());
 			
 		}
 		
-		return this.mapToResponse(wishList);
+		return this.mapToResponse(wishList.getUserId(), wishList.getProductList());
 		
 	}
 	
 	public WishlistResponse removeProduct(Long userId, Long productId) {
 		
-		Wishlist wishList = this.findUser(userId)
-				.orElse(new Wishlist(userId, new HashSet<>()));
-		wishList.getProductList().remove(productId);
-		
-		return this.mapToResponse(wishListRepository.save(wishList));
+		Optional<Wishlist> wishList = wishListRepository.findByUserId(userId);
 				
+		if (wishList.isPresent()) {
+			
+			if (wishList.get().getProductList().size() > 1) {
+				
+				
+				wishList.get().getProductList().remove(productId);
+				
+				
+				Wishlist wishListProductRemoved = wishListRepository.save(wishList.get());
+				
+				
+				return this.mapToResponse(wishListProductRemoved.getUserId(), wishListProductRemoved.getProductList());
+				
+			} else {
+				
+				
+				wishListRepository.delete(wishList.get());
+				
+			}
+			
+			
+		}		
 		
+		
+		return this.mapToResponse(null,null);
+				
 	}
 	
 	public WishlistResponse getAllProductsByUser(Long userId) {
 		
-		Optional<Wishlist> wishList = this.findUser(userId);
+		Wishlist wishList = wishListRepository.findByUserId(userId).orElse(new Wishlist());
 		
-		 return this.mapToResponse(wishList.get());
-
+		return this.mapToResponse(wishList.getUserId(), wishList.getProductList());
 		
 	}
 	
 	public Boolean isProductInWishListOfUser(Long userId, Long productId) {
 		
-		Optional<Wishlist> wishList = this.findUser(userId);
+		Optional<Wishlist> wishList = wishListRepository.findByUserId(userId);
 		
 		 if (wishList.isEmpty()) {
 			 
@@ -74,21 +99,6 @@ public class WishlistService {
 
 	}
 	
-	private Optional<Wishlist> findUser(Long userId) {
-		
-		Optional<Wishlist> wishList = wishListRepository.findByUserId(userId);
-		
-		if (wishList.isEmpty()) {
-			
-			return Optional.of(new Wishlist(userId, new HashSet<>()));
-		
-		} else {
-			
-			return wishList;
-		
-		}
-		
-	}
 	
 	private boolean limitOfProductsIntoWishListWasNotReached(int sizeOfList) {
 		
@@ -102,9 +112,10 @@ public class WishlistService {
 		
 	}
 	
-	private WishlistResponse mapToResponse (Wishlist wishList) {
+	
+	private WishlistResponse mapToResponse (Long userId, HashSet<Long> productList) {
 		
-		return new WishlistResponse(wishList.getUserId(), wishList.getProductList());
+		return new WishlistResponse(userId, productList);
 		
 	}
 	

@@ -3,6 +3,7 @@ package com.project.wishlist.api.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Set;
@@ -60,12 +61,63 @@ public class WishlistServiceTest {
     	
     	wishListService.removeProduct(userId, productId2);
     	
-    	WishlistResponse wishListFoundAfterRemoveProduct = wishListService.getAllProductsByUser(700L);
+    	WishlistResponse wishListFoundAfterRemoveProduct = wishListService.getAllProductsByUser(userId);
     	
     	assertFalse(wishListFoundAfterRemoveProduct.getProductList().contains(productId2));
     	
     	
     }
+    
+    @DisplayName("should delete a user in a wishlist when all products are removed")
+    @Test
+    public void shouldDeleteUser() {
+    	
+    	Long userId     = 700L;
+    	Long productId1 = 40L;
+    	Long productId2 = 150L;
+    	
+    	wishListService.addProduct(userId, productId1);
+    	wishListService.addProduct(userId, productId2);
+    	
+    	WishlistResponse wishListFound = wishListService.getAllProductsByUser(userId);
+    	
+    	assertFalse(wishListFound.getProductList().isEmpty());
+    	assertThat(wishListFound.getProductList().contains(productId2));
+    	
+    	wishListService.removeProduct(userId, productId2);
+    	
+    	WishlistResponse wishListFoundAfterRemoveProduct = wishListService.getAllProductsByUser(userId);
+    	
+    	assertFalse(wishListFoundAfterRemoveProduct.getProductList().contains(productId2));
+    	assertTrue(wishListFoundAfterRemoveProduct.getProductList().contains(productId1));
+    	
+    	wishListService.removeProduct(userId, productId1);
+    	
+    	WishlistResponse wishListWithLastProductRemoved = wishListService.getAllProductsByUser(userId);
+    	
+    	assertNull(wishListWithLastProductRemoved.getUserId());
+    	assertNull(wishListWithLastProductRemoved.getProductList());
+    	
+    }
+    
+    @DisplayName("should return null when userId not found when remove a product")
+    @Test
+    public void shouldReturnNullWhenProductIsRemoved() {
+    	
+    	Long userId     = 700L;
+    	Long productId1 = 40L;
+    	Long productId2 = 150L;
+    	
+    	WishlistResponse wishListNotFound = wishListService.getAllProductsByUser(userId);
+    	
+    	wishListService.removeProduct(userId, productId2);
+    	
+    	assertNull(wishListNotFound.getUserId());
+    	assertNull(wishListNotFound.getProductList());
+    	
+    }
+    
+    
     
     @DisplayName("should find all products of user`s wishlist")
     @Test
@@ -122,7 +174,7 @@ public class WishlistServiceTest {
     	
     }
     
-    @DisplayName("should returns empty list if user not exist")
+    @DisplayName("should returns null if user not exist")
     @Test
     public void shouldReturnsEmptyListIfUserNotExist () {
     	
@@ -136,8 +188,7 @@ public class WishlistServiceTest {
     	
     	WishlistResponse wishList = wishListService.getAllProductsByUser(userNotExists);
     	
-    	assertTrue(wishList.getProductList().isEmpty());
-    	assertEquals(wishList.getProductList().size(), 0);
+    	assertNull(wishList.getProductList());
     	
     }
     
